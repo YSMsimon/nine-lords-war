@@ -1,9 +1,17 @@
-class BaseTool:
-    def __init__(self, name: str, description: str):
-        pass
+from abc import ABC, abstractmethod
+from agents.base_agent import Agent
 
-    def get_sechma(self) -> dict:
-        pass
 
-    def run(self, input: str) -> str:
-        pass
+class BaseTool(ABC):
+    def __init__(self, agent: Agent, name: str, description: str):
+        self.agent = agent
+        self.name = name
+        self.description = description
+
+    @abstractmethod
+    def get_schema(self) -> list:
+        ...
+
+    @abstractmethod
+    def run(self, **kwargs) -> str:
+        ...
