@@ -1,15 +1,22 @@
 import os
-import asyncio
 from dotenv import load_dotenv
-import litellm
+from openai import AsyncOpenAI
 
 load_dotenv()
 
 AGENT_NAMES = ["老大", "老二", "老三", "老四", "老五", "老六", "老七", "老八", "老九"]
 
+_client = AsyncOpenAI(
+    api_key=os.getenv("OPENROUTER_API_KEY"),
+    base_url="https://openrouter.ai/api/v1",
+)
+
 
 class Agent:
     def __init__(self, name: str, system_prompt: str):
+        if name not in AGENT_NAMES:
+            raise ValueError(f"Unknown agent name: {name}. Must be one of {AGENT_NAMES}")
+
         self.name = name
         self.system_prompt = system_prompt
         self.alive = True
@@ -29,7 +36,7 @@ class Agent:
         if tools:
             kwargs["tools"] = tools
 
-        response = await litellm.acompletion(**kwargs)
+        response = await _client.chat.completions.create(**kwargs)
 
         reply = response.choices[0].message.content or ""
         self.messages.append({"role": "assistant", "content": reply})
