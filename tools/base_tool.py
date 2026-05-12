@@ -13,5 +13,5 @@ class BaseTool(ABC):
         ...
 
     @abstractmethod
-    def run(self, **kwargs) -> str:
+    def run(self, **kwargs) -> str | dict:
         ...

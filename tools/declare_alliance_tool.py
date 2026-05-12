@@ -38,7 +38,11 @@ class DeclareAllianceTool(BaseTool):
             }
         ]
 
-    def run(self, **kwargs) -> str:
+    def run(self, **kwargs) -> dict:
         target = kwargs["target"]
         reason = kwargs["reason"]
-        return f"[结盟] {self.agent.name} → {target}: {reason}"
+        return {
+            "proposer": self.agent.name,
+            "target": target,
+            "reason": reason,
+        }

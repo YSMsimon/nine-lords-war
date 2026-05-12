@@ -1,12 +1,4 @@
-import asyncio
-from agents.agent_factory import create_all_agents
-from rounds.round_manager import run_game
-
-
-async def main():
-    agents = create_all_agents()
-    await run_game(agents)
-
+import uvicorn
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    uvicorn.run("core.server:app", host="0.0.0.0", port=8001, reload=False)

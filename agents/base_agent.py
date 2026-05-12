@@ -20,7 +20,6 @@ class Agent:
         self.name = name
         self.system_prompt = system_prompt
         self.alive = True
-        self.score = 0
         self.messages: list[dict] = [{"role": "system", "content": system_prompt}]
 
         index = AGENT_NAMES.index(name) + 1
@@ -29,18 +28,8 @@ class Agent:
         if not self.model:
             raise ValueError(f"Model not set for {name}: add {model_key}=<model> to .env")
 
-    async def execute(self, user_message: str, tools: list | None = None) -> str:
-        self.messages.append({"role": "user", "content": user_message})
+        from memory.agent_memory import AgentMemory
+        self.memory = AgentMemory(name)
 
-        kwargs: dict = {"model": self.model, "messages": self.messages}
-        if tools:
-            kwargs["tools"] = tools
-
-        response = await _client.chat.completions.create(**kwargs)
-
-        reply = response.choices[0].message.content or ""
-        self.messages.append({"role": "assistant", "content": reply})
-        return reply
-
-    def reset_messages(self):
+    def reset_messages(self) -> None:
         self.messages = [{"role": "system", "content": self.system_prompt}]

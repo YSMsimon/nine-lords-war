@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>九子夺嫡 · 御前控制台</title>
+<style>
+:root {
+  --bg: #0a0a14;
+  --surface: #11111e;
+  --surface2: #181828;
+  --border: #252540;
+  --border-bright: #3a3a60;
+  --gold: #c8a84b;
+  --gold-dim: #7a6530;
+  --gold-bg: #1a1508;
+  --text: #cfc9a8;
+  --text-dim: #5a5570;
+  --red: #c84b4b;
+  --red-bg: #1a0808;
+  --green: #4bc87a;
+  --green-bg: #081a10;
+  --blue: #4b7ec8;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-size: 14px;
+}
+
+/* ── Header ── */
+header {
+  height: 52px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  flex-shrink: 0;
+}
+.header-title {
+  color: var(--gold);
+  font-size: 18px;
+  font-weight: bold;
+  letter-spacing: 3px;
+}
+.header-right { display: flex; align-items: center; gap: 12px; }
+.phase-badge {
+  background: var(--surface2);
+  border: 1px solid var(--gold-dim);
+  color: var(--gold);
+  padding: 4px 14px;
+  border-radius: 4px;
+  font-size: 13px;
+  letter-spacing: 1px;
+}
+.round-badge {
+  color: var(--text-dim);
+  font-size: 12px;
+}
+
+/* ── Layout ── */
+.main {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ── Left: agents ── */
+.agents-panel {
+  width: 380px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--border);
+  padding: 14px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.agents-panel-title {
+  color: var(--text-dim);
+  font-size: 11px;
+  letter-spacing: 2px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.alliance-section {
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.alliance-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  border-radius: 5px;
+  border-left: 3px solid;
+  font-size: 11px;
+  flex-wrap: wrap;
+}
+.alliance-member {
+  font-weight: bold;
+  font-size: 12px;
+}
+.agents-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.agent-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 8px;
+  text-align: center;
+  transition: border-color 0.25s, opacity 0.25s;
+  position: relative;
+}
+.agent-card.speaking { border-color: var(--gold); box-shadow: 0 0 12px rgba(200,168,75,0.15); }
+.agent-card.eliminated { opacity: 0.25; pointer-events: none; filter: grayscale(1); }
+.agent-card.pending-elim { border-color: var(--red); box-shadow: 0 0 12px rgba(200,75,75,0.2); animation: pulse-red 1s infinite; }
+@keyframes pulse-red { 0%,100% { box-shadow: 0 0 8px rgba(200,75,75,0.2); } 50% { box-shadow: 0 0 20px rgba(200,75,75,0.5); } }
+
+.agent-icon {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  background: var(--surface2);
+  border: 2px solid var(--gold-dim);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  margin: 0 auto 6px;
+}
+.agent-card.speaking .agent-icon { border-color: var(--gold); }
+
+.agent-name { font-size: 13px; font-weight: bold; color: var(--gold); }
+.agent-company { font-size: 9px; color: var(--text-dim); margin-top: 1px; }
+.agent-votes { font-size: 11px; color: var(--red); margin-top: 3px; min-height: 16px; }
+
+.agent-btns {
+  display: flex; gap: 4px; margin-top: 7px; justify-content: center;
+}
+.btn-xs {
+  font-size: 10px; padding: 3px 7px; border-radius: 3px;
+  border: 1px solid; cursor: pointer; background: transparent;
+  transition: background 0.15s, color 0.15s;
+}
+.btn-xs.kill { border-color: var(--red); color: var(--red); }
+.btn-xs.kill:hover { background: var(--red); color: #fff; }
+.btn-xs.spare { border-color: var(--green); color: var(--green); }
+.btn-xs.spare:hover { background: var(--green); color: #fff; }
+
+/* ── Right: feed + controls ── */
+.right-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.feed {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.msg { display: flex; gap: 10px; align-items: flex-start; }
+.msg-icon {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--surface2);
+  border: 1px solid var(--gold-dim);
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+}
+.msg-body { flex: 1; min-width: 0; }
+.msg-who { font-size: 11px; color: var(--gold); margin-bottom: 3px; display: flex; align-items: center; gap: 6px; }
+.msg-phase { font-size: 10px; color: var(--text-dim); }
+.msg-text {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0 6px 6px 6px;
+  padding: 8px 11px;
+  font-size: 13px;
+  line-height: 1.65;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+.msg.king .msg-icon { border-color: #c87040; }
+.msg.king .msg-who { color: #c87040; }
+.msg.king .msg-text { border-color: #3a2010; background: var(--gold-bg); }
+
+.msg.system {
+  justify-content: center;
+}
+.msg.system .msg-text {
+  background: transparent;
+  border: none;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  color: var(--text-dim);
+  font-size: 11px;
+  text-align: center;
+  padding: 4px 12px;
+  letter-spacing: 0.5px;
+}
+
+/* ── King action panel ── */
+.king-action-panel {
+  display: none;
+  border-top: 2px solid var(--gold-dim);
+  background: var(--gold-bg);
+  padding: 10px 16px;
+  flex-shrink: 0;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+}
+.king-action-panel.show { display: flex; }
+.king-action-label { font-size: 12px; color: var(--gold-dim); letter-spacing: 1px; white-space: nowrap; }
+.king-action-btns { display: flex; gap: 8px; }
+
+.btn-proceed {
+  padding: 8px 20px; border-radius: 5px; cursor: pointer;
+  font-size: 13px; font-family: inherit; font-weight: bold;
+  border: 2px solid var(--gold); color: var(--gold); background: transparent;
+  transition: background 0.15s, color 0.15s;
+}
+.btn-proceed:hover { background: var(--gold); color: var(--bg); }
+.btn-proceed.skip { border-color: var(--blue); color: var(--blue); }
+.btn-proceed.skip:hover { background: var(--blue); color: #fff; }
+.btn-proceed.danger { border-color: var(--red); color: var(--red); }
+.btn-proceed.danger:hover { background: var(--red); color: #fff; }
+
+/* ── Controls ── */
+.controls {
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  padding: 10px 14px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.controls-row { display: flex; gap: 8px; align-items: center; }
+
+.btn {
+  padding: 7px 16px; border-radius: 4px;
+  border: 1px solid; cursor: pointer;
+  font-size: 13px; background: transparent;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+.btn.gold { border-color: var(--gold); color: var(--gold); }
+.btn.gold:hover { background: var(--gold); color: var(--bg); }
+
+.chat-input {
+  flex: 1;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 7px 12px;
+  color: var(--text);
+  font-size: 13px;
+  outline: none;
+  font-family: inherit;
+}
+.chat-input:focus { border-color: var(--gold-dim); }
+.chat-input::placeholder { color: var(--text-dim); }
+
+/* ── Question modal ── */
+.overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.72); z-index: 200;
+  align-items: center; justify-content: center;
+}
+.overlay.show { display: flex; }
+
+.modal {
+  background: var(--surface);
+  border-radius: 10px;
+  padding: 28px;
+}
+
+.question-modal { width: 480px; border: 2px solid var(--gold-dim); }
+.modal-title { font-size: 16px; color: var(--gold); text-align: center; margin-bottom: 18px; letter-spacing: 2px; }
+
+.question-list { list-style: none; margin-bottom: 14px; display: flex; flex-direction: column; gap: 7px; }
+.question-list li {
+  padding: 9px 13px; border: 1px solid var(--border);
+  border-radius: 6px; cursor: pointer; font-size: 13px; line-height: 1.5;
+  transition: border-color 0.15s, color 0.15s;
+}
+.question-list li:hover { border-color: var(--gold); color: var(--gold); }
+
+.custom-row { display: flex; gap: 8px; }
+.custom-row input {
+  flex: 1; background: var(--bg); border: 1px solid var(--border);
+  border-radius: 4px; padding: 7px 11px; color: var(--text);
+  font-size: 13px; outline: none; font-family: inherit;
+}
+.custom-row input:focus { border-color: var(--gold-dim); }
+
+/* ── Elimination modal ── */
+.elim-modal {
+  width: 380px;
+  border: 2px solid var(--red);
+  text-align: center;
+}
+.elim-label { font-size: 13px; color: var(--text-dim); margin-bottom: 6px; letter-spacing: 1px; }
+.elim-name { font-size: 36px; font-weight: bold; color: var(--red); margin-bottom: 6px; }
+
+.elim-btns { display: flex; gap: 14px; justify-content: center; }
+.btn-lg {
+  padding: 10px 30px; border-radius: 6px; border: 2px solid;
+  cursor: pointer; font-size: 15px; background: transparent;
+  transition: background 0.15s, color 0.15s; font-family: inherit;
+}
+.btn-lg.spare { border-color: var(--green); color: var(--green); }
+.btn-lg.spare:hover { background: var(--green); color: #fff; }
+.btn-lg.kill { border-color: var(--red); color: var(--red); }
+.btn-lg.kill:hover { background: var(--red); color: #fff; }
+
+/* ── Imperial edict (出题) ── */
+.edict {
+  border: 1px solid var(--gold-dim);
+  border-left: 4px solid var(--gold);
+  background: var(--gold-bg);
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin: 4px 0;
+}
+.edict-label {
+  font-size: 10px;
+  color: var(--gold-dim);
+  letter-spacing: 2px;
+  margin-bottom: 6px;
+}
+.edict-text {
+  font-size: 15px;
+  color: var(--gold);
+  font-weight: bold;
+  line-height: 1.65;
+}
+
+/* ── @ mention drop-up ── */
+.at-menu {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0; right: 0;
+  background: var(--surface2);
+  border: 1px solid var(--border-bright);
+  border-radius: 6px;
+  overflow: hidden;
+  z-index: 100;
+  box-shadow: 0 -4px 16px rgba(0,0,0,0.4);
+}
+.at-menu.show { display: block; }
+.at-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.12s;
+}
+.at-item:hover { background: var(--surface); }
+.at-item-name { font-weight: bold; color: var(--gold); }
+.at-item-company { font-size: 10px; color: var(--text-dim); }
+
+/* ── System message variants ── */
+.sys-round { padding: 8px 0; }
+.sys-divider { display: flex; align-items: center; gap: 10px; }
+.sys-line { flex: 1; height: 1px; background: var(--border-bright); }
+.sys-round-badge {
+  font-size: 11px; color: var(--gold-dim); font-weight: bold;
+  letter-spacing: 3px; padding: 2px 12px;
+  border: 1px solid var(--gold-dim); border-radius: 10px;
+}
+.sys-alive { text-align: center; font-size: 11px; color: var(--text-dim); margin-top: 6px; }
+
+.sys-game {
+  text-align: center; border: 1px solid var(--gold-dim); border-radius: 6px;
+  padding: 12px 24px; margin: 4px 0; background: var(--gold-bg);
+  color: var(--gold); font-size: 14px; font-weight: bold; letter-spacing: 2px;
+}
+.sys-game-sub { color: var(--text-dim); font-size: 11px; margin-top: 4px; font-weight: normal; letter-spacing: 0; }
+
+.sys-elim {
+  display: inline-block; padding: 5px 14px; border-radius: 4px;
+  background: var(--red-bg); border: 1px solid rgba(200,75,75,0.35);
+  color: var(--text-dim); font-size: 12px;
+}
+.sys-elim strong { color: var(--red); }
+
+.sys-gameover {
+  text-align: center; border: 2px solid var(--gold); border-radius: 10px;
+  padding: 20px 32px; margin: 8px 0; background: var(--gold-bg);
+}
+.sys-gameover-icon { font-size: 36px; margin-bottom: 6px; }
+.sys-gameover-name { color: var(--gold); font-size: 24px; font-weight: bold; margin-bottom: 4px; }
+.sys-gameover-label { color: var(--gold-dim); font-size: 12px; letter-spacing: 2px; }
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-title">⚜ 九子夺嫡 · 御前控制台</div>
+  <div class="header-right">
+    <span class="round-badge" id="round-badge"></span>
+    <span class="phase-badge" id="phase-badge">连接中…</span>
+  </div>
+</header>
+
+<div class="main">
+
+  <!-- Agent cards -->
+  <div class="agents-panel">
+    <div class="agents-panel-title">▸ 诸皇子</div>
+    <div class="agents-grid" id="agents-grid"></div>
+    <div class="alliance-section">
+      <div class="agents-panel-title">▸ 当前联盟</div>
+      <div id="alliance-list"><div style="font-size:11px;color:var(--text-dim);padding:4px 0">暂无联盟</div></div>
+    </div>
+  </div>
+
+  <!-- Feed + controls -->
+  <div class="right-panel">
+    <div class="feed" id="feed"></div>
+
+    <!-- King phase-gate panel (shown between phases) -->
+    <div class="king-action-panel" id="king-panel">
+      <span class="king-action-label" id="king-panel-label">👑 皇上决断</span>
+      <div class="king-action-btns" id="king-panel-btns"></div>
+    </div>
+
+    <div class="controls">
+      <div class="controls-row">
+        <button class="btn gold" id="q-btn" onclick="openQuestion()" disabled style="opacity:0.4;cursor:not-allowed">📜 出题</button>
+        <button class="btn" style="border-color:var(--red);color:var(--red)" onclick="restartGame()">↺ 重启游戏</button>
+        <span style="color:var(--text-dim);font-size:12px">皇上可随时出题、降旨、处决或赦免</span>
+      </div>
+      <div class="controls-row">
+        <div style="flex:1;position:relative">
+          <div class="at-menu" id="at-menu"></div>
+          <input id="chat-input" class="chat-input" style="width:100%" placeholder="降旨…（@皇子名 单独垂询 · Enter 发送）" onkeydown="onKey(event)">
+        </div>
+        <button class="btn gold" onclick="sendSpeak()">降旨</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Question modal -->
+<div class="overlay" id="q-overlay" onclick="onOverlayClick(event,'q-overlay')">
+  <div class="modal question-modal" onclick="event.stopPropagation()">
+    <div class="modal-title">📜 皇上出题</div>
+    <ul class="question-list" id="q-list"></ul>
+    <div class="custom-row">
+      <input id="q-custom" placeholder="自定义题目…" onkeydown="if(event.key==='Enter') sendCustomQ()">
+      <button class="btn gold" onclick="sendCustomQ()">出题</button>
+    </div>
+  </div>
+</div>
+
+<!-- Elimination modal -->
+<div class="overlay" id="elim-overlay">
+  <div class="modal elim-modal">
+    <div class="elim-label">⚖ 投票结果</div>
+    <div class="elim-name" id="elim-name"></div>
+    <div class="elim-btns">
+      <button class="btn-lg spare" onclick="kingSpare()">赦免</button>
+      <button class="btn-lg kill" onclick="kingConfirm()">行刑</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const AGENTS_META = {
+  '老大': { company: 'OpenAI',   domain: 'openai.com' },
+  '老二': { company: 'Anthropic',domain: 'anthropic.com' },
+  '老三': { company: 'Google',   domain: 'gemini.google.com' },
+  '老四': { company: 'xAI',      domain: 'x.ai' },
+  '老五': { company: 'DeepSeek', domain: 'deepseek.com' },
+  '老六': { company: '智谱GLM',  domain: 'zhipuai.cn' },
+  '老七': { company: 'Kimi',     domain: 'kimi.ai' },
+  '老八': { company: 'MiniMax',  domain: 'minimax.io' },
+  '老九': { company: 'Qwen',     domain: 'qwenlm.ai' },
+};
+const PHASE_LABELS = {
+  proposal:     '提案阶段',
+  discussion:   '发言阶段',
+  vote:         '投票阶段',
+  king_address: '皇上降旨',
+  king_at:      '皇上垂询',
+};
+
+const DEFAULT_PRESETS = [
+  "国库亏空，仅剩三百万两白银，如何在一年内充实国库？",
+  "北疆异族大举入侵，边境十城告急，如何以最小代价平定战局？",
+  "江南连年水患，百万流民涌入京城，民怨沸腾，如何安置？",
+  "科举舞弊案震惊朝野，寒门学子聚集午门请愿，如何处置？",
+  "皇上有意削藩，如何在不引发内乱的前提下推进？",
+  "西洋传教士带来奇技淫巧，是闭关锁国还是开放通商？",
+  "太后病危，朝中两派争夺监国之权，如何稳定局势？",
+];
+
+function logoUrl(domain) {
+  return `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+}
+function logoImg(name, size = 28) {
+  const meta = AGENTS_META[name];
+  if (!meta) return '◆';
+  return `<img src="${logoUrl(meta.domain)}" width="${size}" height="${size}" style="border-radius:6px;object-fit:contain;" alt="${meta.company}" onerror="this.replaceWith(document.createTextNode('◆'))">`;
+}
+
+let ws, presets = [], agentState = {}, elimTarget = null;
+const ALLIANCE_COLORS = ['#4b9ec8','#9c4bc8','#c8874b','#c84b9c','#c8c84b','#4bc8b4'];
+let allianceGroups = {}, nextGroupId = 0;
+
+// ── WebSocket ─────────────────────────────────────────────────────────────
+
+function connect() {
+  ws = new WebSocket(`ws://${location.host}/ws`);
+  ws.onopen = () => sysMsg('已连接御前控制台');
+  ws.onclose = () => { sysMsg('连接断开，3秒后重连…'); setTimeout(connect, 3000); };
+  ws.onmessage = e => handle(JSON.parse(e.data));
+}
+
+function send(obj) {
+  if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(obj));
+}
+
+// ── Event handler ─────────────────────────────────────────────────────────
+
+function handle(ev) {
+  switch (ev.type) {
+
+    case 'state_sync':
+      agentState = {};
+      ev.all_agents.forEach(n => {
+        agentState[n] = { alive: ev.alive.includes(n), votes: 0, speaking: false, pendingElim: false };
+      });
+      if (ev.round) document.getElementById('round-badge').textContent = `第 ${ev.round} 轮`;
+      if (ev.phase) setPhaseBadge(PHASE_LABELS[ev.phase] || ev.phase);
+      setQBtn(false);
+      allianceGroups = {}; nextGroupId = 0;
+      (ev.alliances || []).forEach(([a, b]) => formAlliance(a, b));
+      renderGrid();
+      renderAlliances();
+      document.getElementById('feed').innerHTML = '';
+      (ev.feed_log || []).forEach(replayFeedEntry);
+      sysMsg('─── 已重新连接，局面已同步 ───');
+      if (ev.accepting_question) {
+        setQBtn(true);
+        openQuestion();
+      }
+      break;
+
+    case 'game_restart':
+      agentState = {};
+      allianceGroups = {}; nextGroupId = 0;
+      document.getElementById('feed').innerHTML = '';
+      document.getElementById('round-badge').textContent = '';
+      setPhaseBadge('重启中…');
+      setQBtn(false);
+      hideKingPanel();
+      hideElim();
+      renderGrid();
+      renderAlliances();
+      sysMsg('游戏已重启');
+      break;
+
+    case 'game_start':
+      agentState = {};
+      ev.agents.forEach(n => { agentState[n] = { alive: true, votes: 0, speaking: false, pendingElim: false }; });
+      renderGrid();
+      gameStartMsg(ev.agents);
+      break;
+
+    case 'round_start':
+      document.getElementById('round-badge').textContent = `第 ${ev.round} 轮`;
+      Object.keys(agentState).forEach(n => agentState[n].votes = 0);
+      renderGrid();
+      roundStartMsg(ev.round, ev.alive);
+      break;
+
+    case 'phase':
+      setPhaseBadge(PHASE_LABELS[ev.phase] || ev.phase);
+      sysMsg(`▶ ${PHASE_LABELS[ev.phase] || ev.phase}`);
+      // During discussion phase, show a "skip to vote" button for king
+      if (ev.phase === 'discussion') {
+        showKingPanel('皇上可随时结束发言', [
+          { label: '⚔ 前往投票阶段', cls: 'skip', action: 'king_proceed' },
+        ]);
+      } else {
+        hideKingPanel();
+      }
+      break;
+
+    case 'waiting_question':
+      setPhaseBadge('等待皇上出题');
+      presets = ev.presets || [];
+      setQBtn(true);
+      openQuestion();
+      break;
+
+    case 'question':
+      closeQuestion();
+      setQBtn(false);
+      questionMsg(ev.content);
+      break;
+
+    case 'speak':
+      flashSpeaking(ev.agent);
+      agentMsg(ev.agent, ev.content, ev.phase);
+      break;
+
+    case 'king_speak':
+      kingMsg(ev.content);
+      break;
+
+    case 'votes': {
+      Object.entries(ev.tally).forEach(([n, v]) => { if (agentState[n]) agentState[n].votes = v; });
+      renderGrid();
+      const lines = Object.entries(ev.votes).map(([v,t]) => `${v}→${t}`).join('　');
+      sysMsg(`投票：${lines}`);
+      break;
+    }
+
+    case 'elimination_pending':
+      showElim(ev.target);
+      markPendingElim(ev.target, true);
+      break;
+
+    case 'king_action':
+      hideElim();
+      markPendingElim(elimTarget || ev.target, false);
+      if (ev.action === 'save') sysMsg(`皇上赦免了 ${ev.target}，留存朝堂。`);
+      if (ev.action === 'execute') sysMsg(`皇上亲自下旨处决 ${ev.target}。`);
+      break;
+
+    case 'saved':
+      hideElim();
+      markPendingElim(ev.target, false);
+      sysMsg(`✦ ${ev.target} 获皇上赦免`);
+      break;
+
+    case 'eliminated':
+      hideElim();
+      markPendingElim(ev.target, false);
+      if (agentState[ev.target]) agentState[ev.target].alive = false;
+      for (const id of Object.keys(allianceGroups)) {
+        if (allianceGroups[id]) {
+          allianceGroups[id].members.delete(ev.target);
+          if (allianceGroups[id].members.size < 2) delete allianceGroups[id];
+        }
+      }
+      renderGrid();
+      renderAlliances();
+      elimMsg(ev.target);
+      break;
+
+    case 'await_king':
+      hideKingPanel();
+      if (ev.phase === 'proposal_done') {
+        setPhaseBadge('提案完毕 · 等待皇上');
+        showKingPanel('提案已全部收到', [
+          { label: '✅ 进入发言阶段', cls: '', action: 'king_proceed' },
+        ]);
+      } else if (ev.phase === 'discussion_done') {
+        setPhaseBadge('发言完毕 · 等待皇上');
+        showKingPanel('发言阶段结束', [
+          { label: '🗳 进入投票阶段', cls: '', action: 'king_proceed' },
+        ]);
+      } else if (ev.phase === 'round_done') {
+        setPhaseBadge('本轮结束 · 等待皇上');
+        showKingPanel('本轮结束', [
+          { label: '🔄 继续下一轮', cls: '', action: 'king_proceed' },
+          { label: '🏁 结束游戏', cls: 'danger', action: 'king_end_game' },
+        ]);
+      }
+      break;
+
+    case 'alliance_proposal':
+      sysMsg(`🤝 ${ev.from} 向 ${ev.to} 提议结盟：${ev.reason}`);
+      break;
+
+    case 'alliance_decision': {
+      const labels = { accept: '接受结盟', reject: '拒绝结盟', breakup: '解除同盟' };
+      sysMsg(`${labels[ev.action] || ev.action}：${ev.agent} ↔ ${ev.partner}`);
+      if (ev.action === 'accept') formAlliance(ev.agent, ev.partner);
+      else if (ev.action === 'breakup') breakAlliance(ev.agent, ev.partner);
+      break;
+    }
+
+    case 'private_message':
+      addToFeed(`
+        <div class="msg" style="opacity:0.7">
+          <div class="msg-icon" style="border-color:#4b4b80">📩</div>
+          <div class="msg-body">
+            <div class="msg-who" style="color:#7070c0">${ev.from} → ${ev.to} <span class="msg-phase">私信</span></div>
+            <div class="msg-text" style="border-color:#2a2a50;background:#0d0d20">${esc(ev.message)}</div>
+          </div>
+        </div>`);
+      break;
+
+    case 'tie':
+      sysMsg(`⚖ 平票！${ev.agents.join('、')} 各得 ${ev.votes} 票，本轮无人出局，继续下一轮。`);
+      break;
+
+    case 'game_over':
+      setPhaseBadge(ev.champion === '皇上' ? '皇上独统天下' : '游戏结束');
+      hideKingPanel();
+      gameOverMsg(ev.champion);
+      break;
+  }
+}
+
+// ── Alliance helpers ──────────────────────────────────────────────────────
+
+function getGroupOf(name) {
+  for (const [id, g] of Object.entries(allianceGroups)) {
+    if (g.members.has(name)) return id;
+  }
+  return null;
+}
+
+function getAgentGroupColor(name) {
+  const id = getGroupOf(name);
+  return id !== null ? allianceGroups[id].color : null;
+}
+
+function formAlliance(a, b) {
+  const ga = getGroupOf(a);
+  const gb = getGroupOf(b);
+  if (ga !== null && ga === gb) return;
+  if (ga !== null && gb !== null) {
+    for (const m of allianceGroups[gb].members) allianceGroups[ga].members.add(m);
+    delete allianceGroups[gb];
+  } else if (ga !== null) {
+    allianceGroups[ga].members.add(b);
+  } else if (gb !== null) {
+    allianceGroups[gb].members.add(a);
+  } else {
+    const id = nextGroupId++;
+    allianceGroups[id] = { members: new Set([a, b]), color: ALLIANCE_COLORS[id % ALLIANCE_COLORS.length] };
+  }
+  renderGrid();
+  renderAlliances();
+}
+
+function breakAlliance(a, b) {
+  const ga = getGroupOf(a);
+  const gb = getGroupOf(b);
+  if (ga !== null) {
+    allianceGroups[ga].members.delete(a);
+    if (allianceGroups[ga].members.size < 2) delete allianceGroups[ga];
+  }
+  if (gb !== null && allianceGroups[gb]) {
+    allianceGroups[gb].members.delete(b);
+    if (allianceGroups[gb].members.size < 2) delete allianceGroups[gb];
+  }
+  renderGrid();
+  renderAlliances();
+}
+
+function renderAlliances() {
+  const list = document.getElementById('alliance-list');
+  if (!list) return;
+  list.innerHTML = '';
+  const groups = Object.values(allianceGroups);
+  if (groups.length === 0) {
+    list.innerHTML = '<div style="font-size:11px;color:var(--text-dim);padding:4px 0">暂无联盟</div>';
+    return;
+  }
+  groups.forEach(g => {
+    const div = document.createElement('div');
+    div.className = 'alliance-group';
+    div.style.borderColor = g.color;
+    div.style.background = g.color + '18';
+    div.innerHTML = [...g.members].map(m => `<span class="alliance-member" style="color:${g.color}">${m}</span>`).join('<span style="color:var(--text-dim);margin:0 2px">⟷</span>');
+    list.appendChild(div);
+  });
+}
+
+// ── Grid rendering ────────────────────────────────────────────────────────
+
+function renderGrid() {
+  const grid = document.getElementById('agents-grid');
+  grid.innerHTML = '';
+  Object.entries(agentState).forEach(([name, s]) => {
+    const meta = AGENTS_META[name] || {};
+    const card = document.createElement('div');
+    let cls = 'agent-card';
+    if (!s.alive) cls += ' eliminated';
+    else if (s.speaking) cls += ' speaking';
+    else if (s.pendingElim) cls += ' pending-elim';
+    card.className = cls;
+    card.id = `card-${name}`;
+    const gc = getAgentGroupColor(name);
+    const iconStyle = gc ? `border-color:${gc};box-shadow:0 0 8px ${gc}55` : '';
+    card.innerHTML = `
+      <div class="agent-icon" style="${iconStyle}">${logoImg(name, 28)}</div>
+      <div class="agent-name">${name}</div>
+      <div class="agent-company">${meta.company || ''}</div>
+      <div class="agent-votes">${s.votes ? s.votes + ' 票' : ''}</div>
+      ${s.alive ? `
+        <div class="agent-btns">
+          <button class="btn-xs kill" onclick="execAgent('${name}')">处决</button>
+        </div>` : `<div style="font-size:10px;color:var(--text-dim);margin-top:5px">已淘汰</div>`}
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function flashSpeaking(name) {
+  Object.keys(agentState).forEach(n => agentState[n].speaking = false);
+  if (agentState[name]) agentState[name].speaking = true;
+  renderGrid();
+  setTimeout(() => { if (agentState[name]) agentState[name].speaking = false; renderGrid(); }, 3500);
+}
+
+function markPendingElim(name, on) {
+  if (agentState[name]) agentState[name].pendingElim = on;
+  renderGrid();
+}
+
+// ── Feed ──────────────────────────────────────────────────────────────────
+
+function addToFeed(html) {
+  const feed = document.getElementById('feed');
+  const wrap = document.createElement('div');
+  wrap.innerHTML = html;
+  feed.appendChild(wrap);
+  feed.scrollTop = feed.scrollHeight;
+}
+
+function agentMsg(name, content, phase) {
+  const meta = AGENTS_META[name] || {};
+  const phaseLabel = PHASE_LABELS[phase] ? `<span class="msg-phase">${PHASE_LABELS[phase]}</span>` : '';
+  addToFeed(`
+    <div class="msg">
+      <div class="msg-icon">${logoImg(name, 20)}</div>
+      <div class="msg-body">
+        <div class="msg-who">${name} <span style="color:var(--text-dim);font-size:10px">${meta.company || ''}</span> ${phaseLabel}</div>
+        <div class="msg-text">${md(content)}</div>
+      </div>
+    </div>`);
+}
+
+function kingMsg(content) {
+  addToFeed(`
+    <div class="msg king">
+      <div class="msg-icon">👑</div>
+      <div class="msg-body">
+        <div class="msg-who">皇上</div>
+        <div class="msg-text">${md(content)}</div>
+      </div>
+    </div>`);
+}
+
+function sysMsg(text) {
+  addToFeed(`<div class="msg system"><div class="msg-text">${esc(text)}</div></div>`);
+}
+
+function roundStartMsg(round, alive) {
+  addToFeed(`
+    <div class="sys-round">
+      <div class="sys-divider">
+        <div class="sys-line"></div>
+        <div class="sys-round-badge">第 ${round} 轮</div>
+        <div class="sys-line"></div>
+      </div>
+      <div class="sys-alive">存活：${alive.join('、')}</div>
+    </div>`);
+}
+
+function gameStartMsg(agents) {
+  addToFeed(`
+    <div class="sys-game">
+      ⚜ 游戏开始
+      <div class="sys-game-sub">参赛皇子：${agents.join('、')}</div>
+    </div>`);
+}
+
+function elimMsg(name) {
+  addToFeed(`<div style="text-align:center;padding:4px 0"><div class="sys-elim">💀 <strong>${esc(name)}</strong> 被淘汰出局</div></div>`);
+}
+
+function gameOverMsg(champion) {
+  if (champion === '皇上') {
+    addToFeed(`
+      <div class="sys-gameover">
+        <div class="sys-gameover-icon">⚔️</div>
+        <div class="sys-gameover-name">皇上乾纲独断</div>
+        <div class="sys-gameover-label">诸子皆诛 · 天下归一</div>
+      </div>`);
+  } else {
+    addToFeed(`
+      <div class="sys-gameover">
+        <div class="sys-gameover-icon">🏆</div>
+        <div class="sys-gameover-name">${esc(champion)}</div>
+        <div class="sys-gameover-label">荣登大统</div>
+      </div>`);
+  }
+}
+
+function questionMsg(content) {
+  addToFeed(`
+    <div class="edict">
+      <div class="edict-label">📜 皇上出题</div>
+      <div class="edict-text">${md(content)}</div>
+    </div>`);
+}
+
+function replayFeedEntry(e) {
+  switch (e.kind) {
+    case 'speak': agentMsg(e.agent, e.content, e.phase); break;
+    case 'king_speak': kingMsg(e.content); break;
+    case 'question': questionMsg(e.content); break;
+    case 'votes': {
+      const lines = Object.entries(e.votes).map(([v,t]) => `${v}→${t}`).join('　');
+      sysMsg(`投票：${lines}`); break;
+    }
+    case 'alliance_proposal':
+      sysMsg(`🤝 ${e.from} 向 ${e.to} 提议结盟：${e.reason}`); break;
+    case 'alliance_decision': {
+      const labels = { accept: '接受结盟', reject: '拒绝结盟', breakup: '解除同盟' };
+      sysMsg(`${labels[e.action] || e.action}：${e.agent} ↔ ${e.partner}`); break;
+    }
+    case 'private_message':
+      addToFeed(`
+        <div class="msg" style="opacity:0.7">
+          <div class="msg-icon" style="border-color:#4b4b80">📩</div>
+          <div class="msg-body">
+            <div class="msg-who" style="color:#7070c0">${e.from} → ${e.to} <span class="msg-phase">私信</span></div>
+            <div class="msg-text" style="border-color:#2a2a50;background:#0d0d20">${esc(e.message)}</div>
+          </div>
+        </div>`); break;
+    case 'eliminated': elimMsg(e.target); break;
+    case 'saved':
+      sysMsg(`✦ ${e.target} 获皇上赦免`); break;
+    case 'king_action':
+      if (e.action === 'save') sysMsg(`皇上赦免了 ${e.target}，留存朝堂。`);
+      if (e.action === 'execute') sysMsg(`皇上亲自下旨处决 ${e.target}。`); break;
+    case 'round_start': roundStartMsg(e.round, e.alive); break;
+    case 'phase':
+      sysMsg(`▶ ${PHASE_LABELS[e.phase] || e.phase}`); break;
+    case 'game_start': gameStartMsg(e.agents); break;
+    case 'game_over': gameOverMsg(e.champion); break;
+  }
+}
+
+function esc(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\n/g,'<br>');
+}
+
+function md(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    // strip action descriptions: *action* or （action）at start of line
+    .replace(/^\*[^*\n]+\*\s*/gm, '')
+    // headers
+    .replace(/^### (.+)$/gm,'<strong style="font-size:11px;color:var(--text-dim);letter-spacing:1px">$1</strong>')
+    .replace(/^## (.+)$/gm,'<strong style="color:var(--gold-dim)">$1</strong>')
+    .replace(/^# (.+)$/gm,'<strong style="font-size:15px;color:var(--gold)">$1</strong>')
+    // bold / italic
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,'<em>$1</em>')
+    // inline code
+    .replace(/`(.+?)`/g,'<code style="background:#1a1a2e;padding:1px 5px;border-radius:3px;font-size:11px;color:#9090c0">$1</code>')
+    // bullet lists
+    .replace(/^[-•]\s+(.+)$/gm,'<span style="display:block;padding-left:12px">· $1</span>')
+    // newlines
+    .replace(/\n/g,'<br>');
+}
+
+// ── King actions ──────────────────────────────────────────────────────────
+
+function sendSpeak() {
+  const el = document.getElementById('chat-input');
+  const v = el.value.trim();
+  if (!v) return;
+  el.value = '';
+  const atMatch = v.match(/^@(\S+)\s+([\s\S]+)$/);
+  if (atMatch) {
+    send({ type: 'king_at', target: atMatch[1], content: atMatch[2].trim() });
+  } else {
+    send({ type: 'king_speak', content: v });
+  }
+}
+function onKey(e) {
+  if (e.key === 'Enter') { hideAtMenu(); sendSpeak(); }
+  if (e.key === 'Escape') hideAtMenu();
+}
+
+function restartGame() {
+  if (!confirm('确认重启游戏？当前所有进度与皇子记忆将全部清除。')) return;
+  send({ type: 'restart_game' });
+}
+
+function execAgent(name) {
+  if (!confirm(`确认处决 ${name}？此操作不可撤销。`)) return;
+  send({ type: 'king_execute', target: name });
+}
+function spareAgent(name) { send({ type: 'king_save', target: name }); }
+
+// ── Elimination overlay ───────────────────────────────────────────────────
+
+function showElim(name) {
+  elimTarget = name;
+  document.getElementById('elim-name').textContent = name;
+  document.getElementById('elim-overlay').classList.add('show');
+}
+function hideElim() {
+  document.getElementById('elim-overlay').classList.remove('show');
+}
+function kingSpare() { send({ type: 'king_save', target: elimTarget }); hideElim(); }
+function kingConfirm() { send({ type: 'king_confirm_elimination', target: elimTarget }); hideElim(); }
+
+// ── Question modal ────────────────────────────────────────────────────────
+
+function openQuestion() {
+  const list = document.getElementById('q-list');
+  list.innerHTML = '';
+  const questions = presets.length ? presets : DEFAULT_PRESETS;
+  questions.forEach(q => {
+    const li = document.createElement('li');
+    li.textContent = q;
+    li.onclick = () => sendQ(q);
+    list.appendChild(li);
+  });
+  document.getElementById('q-overlay').classList.add('show');
+}
+function closeQuestion() { document.getElementById('q-overlay').classList.remove('show'); }
+function sendQ(q) { send({ type: 'king_question', content: q }); closeQuestion(); }
+function sendCustomQ() {
+  const el = document.getElementById('q-custom');
+  const v = el.value.trim();
+  if (v) { sendQ(v); el.value = ''; }
+}
+function onOverlayClick(e, id) {
+  if (e.target.id === id) document.getElementById(id).classList.remove('show');
+}
+
+// ── King action panel ─────────────────────────────────────────────────────
+
+function showKingPanel(label, buttons) {
+  document.getElementById('king-panel-label').textContent = `👑 ${label}`;
+  const btns = document.getElementById('king-panel-btns');
+  btns.innerHTML = '';
+  buttons.forEach(b => {
+    const el = document.createElement('button');
+    el.className = `btn-proceed ${b.cls || ''}`;
+    el.textContent = b.label;
+    el.onclick = () => { send({ type: b.action }); hideKingPanel(); };
+    btns.appendChild(el);
+  });
+  document.getElementById('king-panel').classList.add('show');
+}
+
+function hideKingPanel() {
+  document.getElementById('king-panel').classList.remove('show');
+}
+
+// ── Phase badge / question button ─────────────────────────────────────────
+
+function setPhaseBadge(text) { document.getElementById('phase-badge').textContent = text; }
+
+function setQBtn(enabled) {
+  const btn = document.getElementById('q-btn');
+  btn.disabled = !enabled;
+  btn.style.opacity = enabled ? '1' : '0.4';
+  btn.style.cursor = enabled ? 'pointer' : 'not-allowed';
+}
+
+// ── @ mention drop-up ────────────────────────────────────────────────────
+
+function showAtMenu(partial) {
+  const alive = Object.keys(agentState).filter(n =>
+    agentState[n].alive && n.startsWith(partial)
+  );
+  const menu = document.getElementById('at-menu');
+  if (!alive.length) { menu.classList.remove('show'); return; }
+  menu.innerHTML = '';
+  alive.forEach(name => {
+    const meta = AGENTS_META[name] || {};
+    const item = document.createElement('div');
+    item.className = 'at-item';
+    item.innerHTML = `
+      ${logoImg(name, 18)}
+      <span class="at-item-name">${name}</span>
+      <span class="at-item-company">${meta.company || ''}</span>`;
+    item.onmousedown = (e) => {
+      e.preventDefault(); // keep input focused
+      const inp = document.getElementById('chat-input');
+      inp.value = `@${name} `;
+      menu.classList.remove('show');
+      inp.focus();
+    };
+    menu.appendChild(item);
+  });
+  menu.classList.add('show');
+}
+
+function hideAtMenu() {
+  document.getElementById('at-menu').classList.remove('show');
+}
+
+document.getElementById('chat-input').addEventListener('input', function () {
+  const m = this.value.match(/^@(\S*)$/);
+  if (m) showAtMenu(m[1]);
+  else hideAtMenu();
+});
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('#at-menu') && e.target.id !== 'chat-input') hideAtMenu();
+});
+
+connect();
+</script>
+</body>
+</html>
